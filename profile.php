@@ -17,6 +17,17 @@ $query = "SELECT * FROM users WHERE user_id = '$user_id'";
 $result = sqlsrv_query($conn, $query);
 $user = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
 
+// ดึงข้อมูลแผนกจากฐานข้อมูล
+$departments = [];
+$dept_query = "SELECT department_id, department_name FROM departments ORDER BY department_name";
+$dept_result = sqlsrv_query($conn, $dept_query);
+
+if ($dept_result !== false) {
+    while ($row = sqlsrv_fetch_array($dept_result, SQLSRV_FETCH_ASSOC)) {
+        $departments[] = $row;
+    }
+}
+
 // จัดการการแก้ไขข้อมูลส่วนตัว
 if (isset($_POST['update_profile'])) {
     $fullname = clean_input($_POST['fullname']);
@@ -24,27 +35,18 @@ if (isset($_POST['update_profile'])) {
     $department = clean_input($_POST['department']);
     $phone = clean_input($_POST['phone']);
     
-    // ตรวจสอบว่าอีเมลซ้ำหรือไม่ (ยกเว้นผู้ใช้ปัจจุบัน)
-    $query = "SELECT * FROM users WHERE email = '$email' AND user_id != '$user_id'";
-    $result = sqlsrv_query($conn, $query);
-    
-    if ($result === false) {
-        $error = 'เกิดข้อผิดพลาดในการตรวจสอบอีเมล: ' . print_r(sqlsrv_errors(), true);
-    } elseif (sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
-        $error = 'อีเมลนี้มีในระบบแล้ว กรุณาใช้อีเมลอื่น';
-    } else {
-        // อัพเดตข้อมูลผู้ใช้
-        $query = "UPDATE users SET 
-                  fullname = '$fullname', 
-                  email = '$email', 
-                  department = '$department', 
-                  phone = '$phone' 
-                  WHERE user_id = '$user_id'";
+    // อัพเดตข้อมูลผู้ใช้
+    $query = "UPDATE users SET 
+              fullname = '$fullname', 
+              email = '$email', 
+              department = '$department', 
+              phone = '$phone' 
+              WHERE user_id = '$user_id'";
         
         if (sqlsrv_query($conn, $query)) {
             // อัพเดตข้อมูลใน session
             $_SESSION['fullname'] = $fullname;
-            
+            $_SESSION['email'] = $email;
             $success = 'อัพเดตข้อมูลส่วนตัวเรียบร้อยแล้ว';
             
             // ดึงข้อมูลผู้ใช้อีกครั้ง
@@ -68,8 +70,8 @@ if (isset($_POST['change_password'])) {
         $error_password = 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
     } elseif ($new_password !== $confirm_password) {
         $error_password = 'รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน';
-    } elseif (strlen($new_password) < 6) {
-        $error_password = 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
+    } elseif (strlen($new_password) < 4) {
+        $error_password = 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร';
     } else {
         // เข้ารหัสรหัสผ่านใหม่
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
@@ -240,21 +242,29 @@ include 'includes/header.php';
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="department" class="form-label">แผนก/ฝ่าย</label>
+                                <label for="department" class="form-label">หน่วยงาน <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">
                                         <i class="bx bx-building"></i>
                                     </span>
-                                    <input type="text" class="form-control" id="department" name="department" value="<?php echo $user['department']; ?>">
+                                    <select class="form-select" id="department" name="department" required>
+                                        <option value="">เลือกหน่วยงาน</option>
+                                        <?php foreach ($departments as $dept): ?>
+                                            <option value="<?php echo htmlspecialchars($dept['department_name']); ?>"
+                                                <?php echo (isset($user['department']) && $user['department'] == $dept['department_name']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($dept['department_name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-12">
-                                <label for="phone" class="form-label">เบอร์โทรศัพท์</label>
+                                <label for="phone" class="form-label">เบอร์โทรศัพท์ <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">
                                         <i class="bx bx-phone"></i>
                                     </span>
-                                    <input type="text" class="form-control" id="phone" name="phone" value="<?php echo $user['phone']; ?>">
+                                    <input type="text" class="form-control" id="phone" name="phone" value="<?php echo $user['phone']; ?>" required>
                                 </div>
                             </div>
                             <div class="col-12 mt-4">
@@ -299,7 +309,7 @@ include 'includes/header.php';
                                     </span>
                                     <input type="password" class="form-control" id="new_password" name="new_password" required>
                                 </div>
-                                <small class="text-muted">รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร</small>
+                                <small class="text-muted">รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร</small>
                             </div>
                             <div class="col-md-6">
                                 <label for="confirm_password" class="form-label">ยืนยันรหัสผ่านใหม่ <span class="text-danger">*</span></label>

@@ -24,7 +24,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $request_id = clean_input($_GET['id']);
 
 // ดึงข้อมูลรายการแจ้งซ่อม
-$query = "SELECT r.*, c.category_name, u.fullname as requester_name, u.email as requester_email, u.department as requester_department, u.phone as requester_phone 
+$query = "SELECT r.*, c.category_name, r.requester_name as requester_name, r.requester_phone as requester_phone, u.fullname as user_fullname, u.email as user_email, u.department as user_department, u.phone as user_phone 
           FROM repair_requests r 
           JOIN categories c ON r.category_id = c.category_id 
           JOIN users u ON r.user_id = u.user_id 
@@ -90,7 +90,7 @@ if ($_SESSION['role'] == 'admin' && isset($_POST['update_status'])) {
         $success = 'อัพเดตสถานะรายการแจ้งซ่อมเรียบร้อยแล้ว';
         
         // ดึงข้อมูลรายการแจ้งซ่อมอีกครั้งเพื่ออัพเดตข้อมูลที่แสดง
-        $query = "SELECT r.*, c.category_name, u.fullname as requester_name, u.email as requester_email, u.department as requester_department, u.phone as requester_phone 
+        $query = "SELECT r.*, c.category_name, r.requester_name as requester_name, r.requester_phone as requester_phone, u.fullname as user_fullname, u.email as user_email, u.department as user_department, u.phone as user_phone 
                   FROM repair_requests r 
                   JOIN categories c ON r.category_id = c.category_id 
                   JOIN users u ON r.user_id = u.user_id 
@@ -210,28 +210,47 @@ include 'includes/header.php';
                         <span>สถานที่: <?php echo $request['location']; ?></span>
                     </div>
                 <?php endif; ?>
+                <?php if ($request['requester_name'] || $request['requester_phone']): ?>
+                    <div class="card border border-danger shadow-sm mb-3">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-danger mb-3">ข้อมูลผู้แจ้ง</h6>
+                            <?php if ($request['requester_name']): ?>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bx bx-user me-2 text-danger"></i>
+                                    <span><?php echo htmlspecialchars($request['requester_name']); ?></span>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($request['requester_phone']): ?>
+                                <div class="d-flex align-items-center">
+                                    <i class="bx bx-phone me-2 text-danger"></i>
+                                    <span><?php echo htmlspecialchars($request['requester_phone']); ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="col-md-4">
                 <div class="card border-0 shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">ข้อมูลผู้แจ้ง</h5>
+                        <h5 class="card-title">หน่วยงาน</h5>
                         <div class="d-flex align-items-center mb-3">
-                            <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($request['requester_name']); ?>&background=random" alt="User Avatar" class="rounded-circle me-3" width="50" height="50">
+                            <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($request['user_fullname']); ?>&background=random" alt="User Avatar" class="rounded-circle me-3" width="50" height="50">
                             <div>
-                                <h6 class="mb-0"><?php echo $request['requester_name']; ?></h6>
-                                <small class="text-muted"><?php echo $request['requester_email']; ?></small>
+                                <h6 class="mb-0"><?php echo $request['user_fullname']; ?></h6>
+                                <small class="text-muted"><?php echo $request['user_email']; ?></small>
                             </div>
                         </div>
-                        <?php if ($request['requester_department']): ?>
+                        <?php if ($request['user_department']): ?>
                             <div class="d-flex align-items-center mb-2">
                                 <i class="bx bx-building me-2 text-primary"></i>
-                                <span><?php echo $request['requester_department']; ?></span>
+                                <span><?php echo $request['user_department']; ?></span>
                             </div>
                         <?php endif; ?>
-                        <?php if ($request['requester_phone']): ?>
+                        <?php if ($request['user_phone']): ?>
                             <div class="d-flex align-items-center">
                                 <i class="bx bx-phone me-2 text-primary"></i>
-                                <span><?php echo $request['requester_phone']; ?></span>
+                                <span><?php echo $request['user_phone']; ?></span>
                             </div>
                         <?php endif; ?>
                     </div>

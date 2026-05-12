@@ -61,8 +61,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <!-- Custom CSS -->
     <style>
         :root {
-            --primary-color: #6563ff;
-            --primary-dark: #5452d8;
+            --primary-color: #002761;
+            --primary-dark: #040369;
             --secondary-color: #fd7e14;
             --success-color: #20c997;
             --info-color: #0dcaf0;
@@ -257,8 +257,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <div class="sidebar" id="sidebar">
         <div class="logo-container">
             <a href="index.php" class="logo">
-                <i class="bx bx-wrench me-2"></i>
-                <span class="logo-text">ระบบแจ้งซ่อม</span>
+                <img src="pics/logo.png" alt="Logo" class="img-fluid" style="max-width: 40px;"> <!-- ใส่โลโก้เล็กมุมซ้ายบน -->
+                <!-- <i class="bx bx-wrench me-2"></i> -->
+                <span class="logo-text">IT service</span>
             </a>
             <button class="toggle-btn" id="sidebarToggle">
                 <i class="bx bx-menu"></i>
@@ -319,10 +320,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
             <?php else: ?>
                 <!-- Unregistered User Menu -->
-                <a href="index.php" class="menu-item <?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">
+                <!--<a href="index.php" class="menu-item <?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">
                     <i class="bx bx-home-alt"></i>
-                    <span>หน้าหลัก</span>
-                </a>
+                    <span>หน้าหลัก</span> //ปิดไว้เพราะหน้าแรกเป็นหน้าล็อกอินแล้ว
+                </a>-->
                 <a href="login.php" class="menu-item <?php echo ($current_page == 'login.php') ? 'active' : ''; ?>">
                     <i class="bx bx-log-in"></i>
                     <span>เข้าสู่ระบบ</span>

@@ -79,9 +79,11 @@ include 'includes/header.php';
         <div class="card border-0 shadow-lg">
             <div class="card-body p-5">
                 <div class="text-center mb-4">
-                    <i class="bx bx-lock-alt text-primary" style="font-size: 4rem;"></i>
+                    <img src="pics/logo.png" alt="Logo" class="img-fluid" style="max-width: 120px;">
+                    <!--<i class="bx bx-lock-alt text-primary" style="font-size: 4rem;"></i>-->
                     <h2 class="mt-3 fw-bold">เข้าสู่ระบบ</h2>
-                    <p class="text-muted">กรุณาเข้าสู่ระบบเพื่อใช้งานระบบแจ้งซ่อม</p>
+                    <p class="text-muted">กรุณาเข้าสู่ระบบเพื่อใช้งานระบบแจ้งซ่อมอุปกรณ์คอมพิวเตอร์</p>
+                    <p class="text-muted">เวอร์ชั่น 1.0</p>
                 </div>
                 
                 <?php if (isset($error) && !empty($error)): ?>
@@ -128,10 +130,10 @@ include 'includes/header.php';
         <div class="card border-0 shadow-sm mt-4">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center">
-                    <i class="bx bx-info-circle text-info me-3" style="font-size: 2rem;"></i>
+                    <i class="bx bx-info-circle text-info me-3" style="font-size: 1rem;"></i>
                     <div>
                         <h5 class="mb-1">ต้องการความช่วยเหลือ?</h5>
-                        <p class="text-muted mb-0">หากคุณมีปัญหาในการเข้าสู่ระบบ กรุณาติดต่อผู้ดูแลระบบ</p>
+                        <p class="text-muted mb-0">หากมีปัญหาในการเข้าสู่ระบบ กรุณาติดต่อศูนย์เทคโนโลยีสารสนเทศ</p>
                     </div>
                 </div>
             </div>

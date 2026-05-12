@@ -5,8 +5,8 @@ session_start();
 sqlsrv_configure("WarningsReturnAsErrors", 0);
 
 $host = 'localhost\sqlexpress'; 
-$user = 'sa';
-$password = 'Pass@word';
+$user = 'sqlconn';
+$password = 'conn2548';
 $database = 'rp_repair_system';
 
 // 2. ปรับ Option ให้เหลือเท่าที่จำเป็น
@@ -97,16 +97,15 @@ function send_telegram_notification($message) {
     // ดึงข้อมูลการตั้งค่า Telegram ด้วย Prepared Statement
     $query  = "SELECT setting_value FROM settings WHERE setting_name = ?";
 
-    $params = [['telegram_bot_token']];
-    $stmt   = sqlsrv_query($conn, $query, [['telegram_bot_token']]);
+    $stmt   = sqlsrv_query($conn, $query, ['telegram_bot_token']);
     $token  = $stmt ? sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)['setting_value'] : '';
     if ($stmt) sqlsrv_free_stmt($stmt);
 
-    $stmt     = sqlsrv_query($conn, $query, [['telegram_chat_id']]);
+    $stmt     = sqlsrv_query($conn, $query, ['telegram_chat_id']);
     $chat_id  = $stmt ? sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)['setting_value'] : '';
     if ($stmt) sqlsrv_free_stmt($stmt);
 
-    $stmt                 = sqlsrv_query($conn, $query, [['notification_enabled']]);
+    $stmt                 = sqlsrv_query($conn, $query, ['notification_enabled']);
     $notification_enabled = $stmt ? sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)['setting_value'] : '';
     if ($stmt) sqlsrv_free_stmt($stmt);
 

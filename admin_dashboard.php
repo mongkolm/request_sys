@@ -122,7 +122,7 @@ include 'includes/header.php';
             <div class="col-md-8">
                 <div class="p-4 p-md-5">
                     <h1 class="text-primary fw-bold">ยินดีต้อนรับเข้าสู่ระบบแจ้งซ่อม</h1>
-                    <p class="text-muted">จัดการข้อมูลการแจ้งซ่อมได้อย่างมีประสิทธิภาพและรวดเร็ว</p>
+                    <p class="text-muted">ศูนย์เทคโนโลยีสารสนเทศ มูลนิธิโครงการหลวง</p>
                 </div>
             </div>
             <div class="col-md-4 d-none d-md-block text-end">

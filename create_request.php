@@ -19,15 +19,17 @@ $user = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
 
 // จัดการการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $title = clean_input($_POST['title']);
-    $category_id = clean_input($_POST['category_id']);
-    $location = clean_input($_POST['location']);
-    $description = clean_input($_POST['description']);
-    $priority = clean_input($_POST['priority']);
+    $title = clean_input($_POST['title'] ?? '');
+    $category_id = clean_input($_POST['category_id'] ?? '');
+    $requester_name = clean_input($_POST['requester_name'] ?? '');
+    $requester_phone = clean_input($_POST['requester_phone'] ?? '');
+    $location = clean_input($_POST['location'] ?? '');
+    $description = clean_input($_POST['description'] ?? '');
+    $priority = clean_input($_POST['priority'] ?? '');
     $image = '';
     
     // ตรวจสอบว่ามีข้อมูลครบหรือไม่
-    if (empty($title) || empty($category_id) || empty($description)) {
+    if (empty($title) || empty($category_id) || empty($requester_name) || empty($requester_phone) || empty($description)) {
         $error = 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน';
     } else {
         // จัดการการอัพโหลดรูปภาพ (ถ้ามี)
@@ -64,8 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if (!isset($error)) {
             // บันทึกข้อมูลลงในฐานข้อมูล
-            $query = "INSERT INTO repair_requests (user_id, category_id, title, description, location, priority, image) 
-                      VALUES ('$user_id', '$category_id', '$title', '$description', '$location', '$priority', '$image')";
+            $query = "INSERT INTO repair_requests (user_id, category_id, title, requester_name, requester_phone, description, location, priority, image) 
+                      VALUES ('$user_id', '$category_id', '$title', '$requester_name', '$requester_phone', '$description', '$location', '$priority', '$image')";
             
             if (sqlsrv_query($conn, $query)) {
                 // ดึง ID ที่เพิ่ง insert
@@ -93,7 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 send_telegram_notification("<b>มีรายการแจ้งซ่อมใหม่</b>\n\nหมายเลข: #" . $request_id . 
                                           "\nเรื่อง: " . $title . 
-                                          "\nผู้แจ้ง: " . $user['fullname'] . 
+                                          "\nผู้แจ้ง: " . $requester_name . 
+                                          "\nเบอร์โทรผู้แจ้ง: " . ($requester_phone ?: 'ไม่ระบุ') . 
                                           "\nหมวดหมู่: " . $category['category_name'] . 
                                           "\nความสำคัญ: " . $priority_text . 
                                           "\nสถานที่: " . ($location ?: 'ไม่ระบุ') . 
@@ -174,6 +177,22 @@ include 'includes/header.php';
                 </div>
                 
                 <div class="col-md-6">
+                    <label for="requester_name" class="form-label">ชื่อผู้แจ้ง <span class="text-danger">*</span></label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-light"><i class="bx bx-user"></i></span>
+                        <input type="text" class="form-control" id="requester_name" name="requester_name" placeholder="กรอกชื่อผู้แจ้ง" required value="<?php echo isset($_POST['requester_name']) ? htmlspecialchars($_POST['requester_name']) : ''; ?>">
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="requester_phone" class="form-label">เบอร์โทรผู้แจ้ง <span class="text-danger">*</span></label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-light"><i class="bx bx-phone"></i></span>
+                        <input type="text" class="form-control" id="requester_phone" name="requester_phone" placeholder="กรอกเบอร์โทรผู้แจ้ง" required value="<?php echo isset($_POST['requester_phone']) ? htmlspecialchars($_POST['requester_phone']) : ''; ?>">
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
                     <label for="location" class="form-label">สถานที่</label>
                     <div class="input-group mb-3">
                         <span class="input-group-text bg-light"><i class="bx bx-map"></i></span>
@@ -246,11 +265,11 @@ include 'includes/header.php';
             <div class="col-md-6">
                 <h5 class="mb-3">ตัวอย่างรายละเอียดที่ดี</h5>
                 <div class="alert alert-light">
-                    <p class="mb-0"><strong>หัวข้อ:</strong> เครื่องปรับอากาศไม่เย็น</p>
-                    <p class="mb-0"><strong>หมวดหมู่:</strong> เครื่องปรับอากาศ</p>
-                    <p class="mb-0"><strong>สถานที่:</strong> ห้องประชุม 301 อาคาร A ชั้น 3</p>
+                    <p class="mb-0"><strong>หัวข้อ:</strong> เครื่องคอมพิวเตอร์เปิดไม่ติด</p>
+                    <p class="mb-0"><strong>หมวดหมู่:</strong> คอมพิวเตอร์</p>
+                    <p class="mb-0"><strong>สถานที่:</strong> ห้องฝ่ายการเงินและบัญชี อาคาร ป.2 ชั้น 1</p>
                     <p class="mb-0"><strong>ความสำคัญ:</strong> ปานกลาง</p>
-                    <p class="mb-0"><strong>รายละเอียด:</strong> เครื่องปรับอากาศทำงานปกติแต่ไม่เย็น มีเสียงดังผิดปกติเวลาเปิด และมีน้ำหยดจากเครื่อง ปัญหาเริ่มเกิดขึ้นเมื่อวานนี้ (18 พ.ค. 2566) ช่วงบ่าย</p>
+                    <p class="mb-0"><strong>รายละเอียด:</strong> เครื่องคอมพิวเตอร์เปิดเครื่องแล้วหน้าจอไม่แสดงผล มีเสียงดังผิดปกติเวลาเปิด และมีกลิ่นไหม้จากเครื่อง ปัญหาเริ่มเกิดขึ้นเมื่อวานนี้ (11 พ.ค. 2569) ช่วงบ่าย</p>
                 </div>
             </div>
         </div>

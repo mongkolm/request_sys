@@ -5,6 +5,17 @@ $page_title = "สมัครสมาชิก";
 // เชื่อมต่อกับฐานข้อมูล
 require_once 'config/db_connect.php';
 
+// ดึงข้อมูลแผนกจากฐานข้อมูล
+$departments = [];
+$dept_query = "SELECT department_id, department_name FROM departments ORDER BY department_name";
+$dept_result = sqlsrv_query($conn, $dept_query);
+
+if ($dept_result !== false) {
+    while ($row = sqlsrv_fetch_array($dept_result, SQLSRV_FETCH_ASSOC)) {
+        $departments[] = $row;
+    }
+}
+
 // ตรวจสอบว่ามีการล็อกอินอยู่แล้วหรือไม่
 if (isset($_SESSION['user_id'])) {
     // ถ้าล็อกอินแล้ว ให้ redirect ไปยังหน้าที่เหมาะสม
@@ -30,12 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $error = '';
     
     // ตรวจสอบว่ามีข้อมูลครบหรือไม่
-    if (empty($username) || empty($password) || empty($confirm_password) || empty($fullname) || empty($email)) {
+    if (empty($username) || empty($password) || empty($confirm_password) || empty($fullname) || empty($email) || empty($department) || empty($phone)) {
         $error = 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน';
     } elseif ($password !== $confirm_password) {
         $error = 'รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน';
-    } elseif (strlen($password) < 6) {
-        $error = 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
+    } elseif (strlen($password) < 4) {
+        $error = 'รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร';
     } else {
         // ตรวจสอบว่าชื่อผู้ใช้ซ้ำหรือไม่
         $query = "SELECT * FROM users WHERE username = '$username'";
@@ -46,21 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } elseif (sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
             $error = 'ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่อผู้ใช้อื่น';
         } else {
-            // ตรวจสอบว่าอีเมลซ้ำหรือไม่
-            $query = "SELECT * FROM users WHERE email = '$email'";
-            $result = sqlsrv_query($conn, $query);
+            // เข้ารหัสรหัสผ่าน
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             
-            if ($result === false) {
-                $error = 'เกิดข้อผิดพลาดในการตรวจสอบอีเมล: ' . print_r(sqlsrv_errors(), true);
-            } elseif (sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
-                $error = 'อีเมลนี้มีในระบบแล้ว กรุณาใช้อีเมลอื่น';
-            } else {
-                // เข้ารหัสรหัสผ่าน
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                
-                // บันทึกข้อมูลลงในฐานข้อมูล
-                $query = "INSERT INTO users (username, password, fullname, email, department, phone, role) 
-                          VALUES ('$username', '$hashed_password', '$fullname', '$email', '$department', '$phone', 'user')";
+            // บันทึกข้อมูลลงในฐานข้อมูล
+            $query = "INSERT INTO users (username, password, fullname, email, department, phone, role) 
+                      VALUES ('$username', '$hashed_password', '$fullname', '$email', '$department', '$phone', 'user')";
                 
                 if (sqlsrv_query($conn, $query)) {
                     // สมัครสมาชิกสำเร็จ
@@ -90,7 +92,7 @@ include 'includes/header.php';
                 <div class="text-center mb-4">
                     <i class="bx bx-user-plus text-primary" style="font-size: 4rem;"></i>
                     <h2 class="mt-3 fw-bold">สมัครสมาชิก</h2>
-                    <p class="text-muted">สร้างบัญชีใหม่เพื่อใช้งานระบบแจ้งซ่อม</p>
+                    <p class="text-muted">สร้างบัญชีใหม่เพื่อใช้งานระบบแจ้งซ่อมอุปกรณ์คอมพิวเตอร์</p>
                 </div>
                 
                 <?php if (isset($error) && !empty($error)): ?>
@@ -147,22 +149,30 @@ include 'includes/header.php';
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="department" class="form-label">แผนก/ฝ่าย</label>
+                                <label for="department" class="form-label">หน่วยงาน <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">
                                         <i class="bx bx-building"></i>
                                     </span>
-                                    <input type="text" class="form-control" id="department" name="department" placeholder="กรอกแผนก/ฝ่าย" value="<?php echo isset($department) ? htmlspecialchars($department) : ''; ?>">
+                                    <select class="form-select" id="department" name="department">
+                                        <option value="">เลือกหน่วยงาน</option>
+                                        <?php foreach ($departments as $dept): ?>
+                                            <option value="<?php echo htmlspecialchars($dept['department_name']); ?>"
+                                                <?php echo (isset($department) && $department == $dept['department_name']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($dept['department_name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label">เบอร์โทรศัพท์</label>
+                                <label for="phone" class="form-label">เบอร์โทรศัพท์ <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">
                                         <i class="bx bx-phone"></i>
                                     </span>
-                                    <input type="text" class="form-control" id="phone" name="phone" placeholder="กรอกเบอร์โทรศัพท์" value="<?php echo isset($phone) ? htmlspecialchars($phone) : ''; ?>">
+                                    <input type="text" class="form-control" id="phone" name="phone" placeholder="กรอกเบอร์โทรศัพท์" required value="<?php echo isset($phone) ? htmlspecialchars($phone) : ''; ?>">
                                 </div>
                             </div>
                         </div>
@@ -176,7 +186,7 @@ include 'includes/header.php';
                                     </span>
                                     <input type="password" class="form-control" id="password" name="password" placeholder="กรอกรหัสผ่าน" required>
                                 </div>
-                                <small class="text-muted">รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร</small>
+                                <small class="text-muted">รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร</small>
                             </div>
                             
                             <div class="col-md-6 mb-3">

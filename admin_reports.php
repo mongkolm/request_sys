@@ -90,7 +90,7 @@ if (isset($_POST['export_excel'])) {
     echo '<th style="background-color: #f2f2f2;">ความสำคัญ</th>';
     echo '<th style="background-color: #f2f2f2;">สถานะ</th>';
     echo '<th style="background-color: #f2f2f2;">ผู้แจ้ง</th>';
-    echo '<th style="background-color: #f2f2f2;">แผนก</th>';
+    echo '<th style="background-color: #f2f2f2;">หน่วยงาน</th>';
     echo '<th style="background-color: #f2f2f2;">วันที่แจ้ง</th>';
     echo '<th style="background-color: #f2f2f2;">วันที่เสร็จสิ้น</th>';
     echo '<th style="background-color: #f2f2f2;">หมายเหตุ</th>';
@@ -258,7 +258,7 @@ if ($requests_result === false) {
 }
 
 // ดึงข้อมูลสถิติตามหมวดหมู่
-$query = "SELECT c.category_name, 
+$query = "SELECT c.category_id, c.category_name, 
             COUNT(*) as request_count,
             COUNT(CASE WHEN r.status = 'completed' THEN 1 END) as completed_count,
             COUNT(CASE WHEN r.status = 'pending' THEN 1 END) as pending_count,
@@ -267,7 +267,7 @@ $query = "SELECT c.category_name,
           FROM categories c
           LEFT JOIN repair_requests r ON c.category_id = r.category_id
           WHERE (r.created_at BETWEEN '$start_date 00:00:00' AND '$end_date 23:59:59' OR r.created_at IS NULL)
-          GROUP BY c.category_id
+          GROUP BY c.category_id, c.category_name
           ORDER BY request_count DESC";
 
 $category_stats_result = sqlsrv_query($conn, $query);
@@ -584,7 +584,7 @@ include 'includes/header.php';
                             <th>เรื่อง</th>
                             <th>หมวดหมู่</th>
                             <th>ผู้แจ้ง</th>
-                            <th>แผนก</th>
+                            <th>หน่วยงาน</th>
                             <th>สถานะ</th>
                             <th>วันที่แจ้ง</th>
                             <th>วันที่เสร็จสิ้น</th>

@@ -11,6 +11,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
     exit();
 }
 
+// ดึงข้อมูลแผนกจากฐานข้อมูล
+$departments = [];
+$dept_query = "SELECT department_id, department_name FROM departments ORDER BY department_name";
+$dept_result = sqlsrv_query($conn, $dept_query);
+
+if ($dept_result !== false) {
+    while ($row = sqlsrv_fetch_array($dept_result, SQLSRV_FETCH_ASSOC)) {
+        $departments[] = $row;
+    }
+}
+
 // จัดการการเพิ่มผู้ใช้ใหม่
 if (isset($_POST['add_user'])) {
     $username = clean_input($_POST['username']);
@@ -32,23 +43,12 @@ if (isset($_POST['add_user'])) {
     if (sqlsrv_has_rows($result)) {
         $error = 'ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่อผู้ใช้อื่น';
     } else {
-        // ตรวจสอบว่าอีเมลซ้ำหรือไม่
-        $query = "SELECT * FROM users WHERE email = '$email'";
-        $result = sqlsrv_query($conn, $query);
-
-        if ($result === false) {
-            die(print_r(sqlsrv_errors(), true));
-        }
-
-        if (sqlsrv_has_rows($result)) {
-            $error = 'อีเมลนี้มีในระบบแล้ว กรุณาใช้อีเมลอื่น';
-        } else {
-            // เข้ารหัสรหัสผ่าน
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            
-            // บันทึกข้อมูลลงในฐานข้อมูล
-            $query = "INSERT INTO users (username, password, fullname, email, department, phone, role) 
-                      VALUES ('$username', '$hashed_password', '$fullname', '$email', '$department', '$phone', '$role')";
+        // เข้ารหัสรหัสผ่าน
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        
+        // บันทึกข้อมูลลงในฐานข้อมูล
+        $query = "INSERT INTO users (username, password, fullname, email, department, phone, role) 
+                  VALUES ('$username', '$hashed_password', '$fullname', '$email', '$department', '$phone', '$role')";
             
             if (sqlsrv_query($conn, $query)) {
                 $success = 'เพิ่มผู้ใช้งานใหม่เรียบร้อยแล้ว';
@@ -60,7 +60,6 @@ if (isset($_POST['add_user'])) {
             }
         }
     }
-}
 
 // จัดการการแก้ไขผู้ใช้
 if (isset($_POST['edit_user'])) {
@@ -71,25 +70,14 @@ if (isset($_POST['edit_user'])) {
     $phone = clean_input($_POST['phone']);
     $role = clean_input($_POST['role']);
     
-    // ตรวจสอบว่าอีเมลซ้ำหรือไม่ (ยกเว้นผู้ใช้ปัจจุบัน)
-    $query = "SELECT * FROM users WHERE email = '$email' AND user_id != '$user_id'";
-    $result = sqlsrv_query($conn, $query);
-
-    if ($result === false) {
-        die(print_r(sqlsrv_errors(), true));
-    }
-
-    if (sqlsrv_has_rows($result)) {
-        $error = 'อีเมลนี้มีในระบบแล้ว กรุณาใช้อีเมลอื่น';
-    } else {
-        // อัพเดตข้อมูลผู้ใช้
-        $query = "UPDATE users SET 
-                  fullname = '$fullname', 
-                  email = '$email', 
-                  department = '$department', 
-                  phone = '$phone', 
-                  role = '$role' 
-                  WHERE user_id = '$user_id'";
+    // อัพเดตข้อมูลผู้ใช้
+    $query = "UPDATE users SET 
+              fullname = '$fullname', 
+              email = '$email', 
+              department = '$department', 
+              phone = '$phone', 
+              role = '$role' 
+              WHERE user_id = '$user_id'";
         
         if (sqlsrv_query($conn, $query)) {
             $success = 'อัพเดตข้อมูลผู้ใช้เรียบร้อยแล้ว';
@@ -100,7 +88,6 @@ if (isset($_POST['edit_user'])) {
             $error = 'เกิดข้อผิดพลาดในการอัพเดตข้อมูล: ' . print_r(sqlsrv_errors(), true);
         }
     }
-}
 
 // จัดการการรีเซ็ตรหัสผ่าน
 if (isset($_POST['reset_password'])) {
@@ -204,7 +191,7 @@ include 'includes/header.php';
                         <th>ชื่อผู้ใช้</th>
                         <th>ชื่อ-นามสกุล</th>
                         <th>อีเมล</th>
-                        <th>แผนก</th>
+                        <th>หน่วยงาน</th>
                         <th>บทบาท</th>
                         <th>วันที่สร้าง</th>
                         <th>จัดการ</th>
@@ -305,30 +292,37 @@ include 'includes/header.php';
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="email" class="form-label">อีเมล <span class="text-danger">*</span></label>
+                            <label for="email" class="form-label">อีเมล </label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light">
                                     <i class="bx bx-envelope"></i>
                                 </span>
-                                <input type="email" class="form-control" id="email" name="email" required>
+                                <input type="email" class="form-control" id="email" name="email">
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="department" class="form-label">แผนก/ฝ่าย</label>
+                            <label for="department" class="form-label">หน่วยงาน <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light">
                                     <i class="bx bx-building"></i>
                                 </span>
-                                <input type="text" class="form-control" id="department" name="department">
+                                <select class="form-select" id="department" name="department" required>
+                                    <option value="">เลือกหน่วยงาน</option>
+                                    <?php foreach ($departments as $dept): ?>
+                                        <option value="<?php echo htmlspecialchars($dept['department_name']); ?>">
+                                            <?php echo htmlspecialchars($dept['department_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="phone" class="form-label">เบอร์โทรศัพท์</label>
+                            <label for="phone" class="form-label">เบอร์โทรศัพท์ <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light">
                                     <i class="bx bx-phone"></i>
                                 </span>
-                                <input type="text" class="form-control" id="phone" name="phone">
+                                <input type="text" class="form-control" id="phone" name="phone" required>
                             </div>
                         </div>
                         <div class="col-12">
@@ -388,21 +382,28 @@ include 'includes/header.php';
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="edit_email" class="form-label">อีเมล <span class="text-danger">*</span></label>
+                            <label for="edit_email" class="form-label">อีเมล </label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light">
                                     <i class="bx bx-envelope"></i>
                                 </span>
-                                <input type="email" class="form-control" id="edit_email" name="email" required>
+                                <input type="email" class="form-control" id="edit_email" name="email">
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="edit_department" class="form-label">แผนก/ฝ่าย</label>
+                            <label for="edit_department" class="form-label">หน่วยงาน</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light">
                                     <i class="bx bx-building"></i>
                                 </span>
-                                <input type="text" class="form-control" id="edit_department" name="department">
+                                <select class="form-select" id="edit_department" name="department">
+                                    <option value="">เลือกหน่วยงาน</option>
+                                    <?php foreach ($departments as $dept): ?>
+                                        <option value="<?php echo htmlspecialchars($dept['department_name']); ?>">
+                                            <?php echo htmlspecialchars($dept['department_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">
